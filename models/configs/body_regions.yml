@@ -1,0 +1,11 @@
+
+path: /BodyRegions
+
+train: train/images
+
+val: val/images
+
+nc: 4
+
+# class names
+names: ["head", "abdominal_region", "thoracic_region", "pericardium"] # class names
