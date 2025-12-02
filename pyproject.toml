@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "orchestrate"
+version = "0.1.0"
+description = "Orchestrate"
+authors = ["Yutong Wen <yutong.wen@uk-essen.de>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+ultralytics = "^8.3.161"
+torch = "2.3.1"
+fastapi = "^0.115.14"
+uvicorn = "^0.35.0"
+cupy-cuda12x = "^13.4.1"
+simpleitk = "^2.5.2"
+pydicom = "^3.0.1"
+scikit-learn = "^1.7.2"
+gdcm = "^1.1"
+pylibjpeg = "^2.1.0"
+pylibjpeg-libjpeg = "^2.3.0"
+pylibjpeg-openjpeg = "^2.5.0"
+scikit-image = "^0.25.2"
+streamlit = "^1.51.0"
+fhir-pyrate = "^0.2.3"
+python-dotenv = "^1.2.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
