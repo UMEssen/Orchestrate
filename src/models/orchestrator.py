@@ -6,7 +6,6 @@ from utils.preprocessing import dicoms4yolo_topo
 from utils.postprocessing import insert_db,insert_db_error,insert_db_rapid,insert_deid
 from utils.ct_selector import ct_selection,ct_selection_lateral
 from utils.orchestrate_abd_thx import handle_abd_thx_ct
-from utils.orchestrate_brain import handle_brain_ct
 from utils.orchestrate_other import handle_other_modality
 from utils.head_anonym import defacing
 from utils.DCMreceiver import preparation, run_studies
@@ -116,7 +115,7 @@ def orchestrate_models(ct_study: str) -> dict:
                             if modalities[i]=="CT" and planes[i]=="Axial": 
                                 if ('abdominal_region' in ct_measures[i] or 'thoracic_region' in ct_measures[i] or "pericardium" in ct_measures[i]):
                                     
-                                    dic = handle_abd_thx_ct(ct_path,ct_names,bottoms,tops,ct_measures,body_regions_bounding_box,body_regions_class,ct_fmd,studyID,modalities,result_Topo,i,ct_landmarks,planes,thicknesses,region_percentage,organ_percentage,plane1,plane2,plane3)                                
+                                    dic = handle_abd_thx_ct(ct_path,ct_names,ct_measures,ct_fmd,studyID,modalities,result_Topo,i,ct_landmarks,planes,thicknesses,region_percentage,organ_percentage,plane1,plane2,plane3)                                
                                     ct_cohort.append(dic)
                                 if 'head' in ct_measures[i]: #head deid                                
                                     try:
@@ -126,11 +125,8 @@ def orchestrate_models(ct_study: str) -> dict:
                                     except Exception as e:
                                         print("Exception",e)
 
-                                else: # Wrong detections or no detections or head ct
-                                    if "brain" in ct_measures[i]:
-                                        dic = handle_brain_ct(ct_path,body_regions_bounding_box,body_regions_class,bottoms,tops,ct_names,ct_measures,ct_fmd,studyID,modalities,result_Topo,i,ct_landmarks,planes,thicknesses,region_percentage,organ_percentage,plane1,plane2,plane3)
-                                    else:
-                                        dic = handle_other_modality(ct_names,ct_measures,ct_fmd,studyID,modalities,result_Topo,i,planes)
+                                else: # Wrong detections or no detections 
+                                    dic = handle_other_modality(ct_names,ct_measures,ct_fmd,studyID,modalities,result_Topo,i,planes)
                                     ct_cohort.append(dic)
 
                             elif modalities[i]=="PT":  
