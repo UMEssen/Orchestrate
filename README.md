@@ -17,19 +17,66 @@ git clone https://github.com/UMEssen/Orchestrate.git
 cd Orchestrate
 poetry install
 ```
+## Requirements
+### Dataset
+Orchestrate supports only three types of dataset structures
+```bash
 
+# A single-patient study with all series stored in one folder, supporting DICOM format only.
+Study_folder
+  |_____0001.dcm
+  |_____0002.dcm
+  |_____ ....
+
+# Studies from different patients, with all series for each patient stored in a separate folder.
+All_study
+  |_____Study_folder01
+            |_____0001.dcm
+            |_____ ....
+```
+### Checkpoints
+```bash
+mkdir checkpoints
+```
+Please add all checkpoints into this folders.
+## Quick Start
+
+```bash
+CUDA_VISIBLE_DEVICES=3 uvicorn main:app --reload --port 8001
+# Then use the endpoint in SwaggerUI
+http://127.0.0.1:8001/docs
+
+# or with curl
+curl -X 'POST' \
+  'http://127.0.0.1:8001/orchestrate' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "path": [ct_folder01],
+  "file_type": "dcm"
+}'
+
+curl -X 'POST' \
+  'http://127.0.0.1:8001/orchestrate_all' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "path": [ct_folders],
+  "file_type": "dcm" 
+}'
+```
 ---
 
 ## Models
 | Model | Output | Notes |
 | --- | --- | --- |
-| `View Position` | `Lateral`, `Non-Lateral` | Determines the anatomical plane of the topogram |
-| `RAPID Classification` | `Head`,  `Upper Extremities`, `Lower Extremities`,`Torso`| Classifies the anatomical coverage of the topogram |
-| `RAPID Body Regions` | `Head`,  `Abdominal Region`, `Thoracic Region`,`Pericardium`| Detects and localizes body regions of the topogram |
-| `RAPID Landmarks` | `Lung`,  `Heart`, `Spine`,`Liver`,`Kidneys`,`Spleen`,`Stomach`,`Colon`,`Pancreas`,`Brain`,`Hip`| Detects and localizes landmarks of the topogram |
-| `Reconstruction Kernel` | `Soft Kernel`,  `Hard Kernel`| Differentiates soft and hard kernel of the body CT series |
-| `Body Contrast Enhancement` | `Native`,  `Contrast Enhancement (CE)`| Differentiates whether IV contrast enhancement is present in the body CT series |
-| `Brain Contrast Enhancement` | `Native`,  `Contrast Enhancement (CE)`| Differentiates whether IV contrast enhancement is present in the head CT series |
+| View Position | `Lateral`, `Non-Lateral` | Determines the anatomical plane of the topogram |
+| RAPID Classification | `Head`,  `Upper Extremities`, `Lower Extremities`,`Torso`| Classifies the anatomical coverage of the topogram |
+| RAPID Body Regions | `Head`, `Abdominal Region`, `Thoracic Region`,`Pericardium`| Detects and localizes body regions of the topogram |
+| RAPID Landmarks | `Lung`, `Heart`, `Spine`, `Liver`, `Kidneys`, `Spleen`, `Stomach`, `Colon`, `Pancreas`, `Brain`, `Hip`| Detects and localizes landmarks of the topogram |
+| Reconstruction Kernel | `Soft Kernel`,  `Hard Kernel`| Differentiates soft and hard kernel of the body CT series |
+| Body Contrast Enhancement | `Native`,  `Contrast Enhancement (CE)`| Differentiates whether IV contrast enhancement is present in the body CT series |
+| Brain Contrast Enhancement | `Native`,  `Contrast Enhancement (CE)`| Differentiates whether IV contrast enhancement is present in the head CT series |
 
 
 ## Performance

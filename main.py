@@ -1,11 +1,6 @@
 import logging
 from logging.handlers import RotatingFileHandler
 import os
-import pandas as pd
-from fastapi import FastAPI
-from pydantic import BaseModel
-from models.orchestrator import orchestrate_models, orchestrate_all_study
-from ultralytics import YOLO
 
 # Ensure logs directory exists
 os.makedirs("logs", exist_ok=True)
@@ -22,9 +17,26 @@ logger = logging.getLogger("api_logger")
 logger.setLevel(logging.INFO)
 logger.addHandler(handler)
 
+# FastAPI
+from fastapi import FastAPI,HTTPException
+from pydantic import BaseModel
+from fastapi.responses import JSONResponse
+from enum import Enum
+
+# Orchestrate
+from models.orchestrator import orchestrate_models, orchestrate_all_study
+
+
 app = FastAPI()
+class FileType(str, Enum):
+    png = "png"
+    nii = "nii"
+    dcm = "dcm"
+
 class FilePathInput(BaseModel):
     path: str
+    file_type: FileType
+
     
 @app.post("/orchestrate")
 async def orchestrator_endpoint(file: FilePathInput):
