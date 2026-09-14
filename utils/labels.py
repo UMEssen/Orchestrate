@@ -1,3 +1,7 @@
+foreign_metall_labels = ["xxx", 
+                         "xxx", 
+                         "xxx", 
+                         "..."]
 body_region_labels = ["head", 
                       "abdominal_region", 
                       "thoracic_region", 
