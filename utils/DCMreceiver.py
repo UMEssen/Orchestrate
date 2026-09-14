@@ -21,8 +21,36 @@ def filter(path,dim):
 
 
 def series_description(ds):
-    desc = getattr(ds, 'SeriesDescription', '').lower()
-    return desc
+    desc = getattr(ds, 'SeriesDescription', '')
+    if isinstance(desc, pydicom.multival.MultiValue):
+        desc = ' '.join(str(v) for v in desc)
+    return str(desc).lower()
+
+
+def is_localizer_image_type(ds):
+    """
+    Checks the ImageType tag for a 'LOCALIZER' entry (case-insensitive).
+    ImageType is typically multi-valued, e.g. ['ORIGINAL', 'PRIMARY', 'LOCALIZER'].
+    """
+    image_type = getattr(ds, 'ImageType', '')
+    if isinstance(image_type, pydicom.multival.MultiValue):
+        values = [str(v).lower() for v in image_type]
+    else:
+        values = [str(image_type).lower()]
+    return any('localizer' in v for v in values)
+
+
+def get_series_flag(ds):
+    """
+    Returns the series description if present; otherwise falls back to
+    checking ImageType for a LOCALIZER flag.
+    """
+    desc = series_description(ds)
+    if desc.strip():
+        return desc
+    if is_localizer_image_type(ds):
+        return 'localizer'
+    return desc  # stays '' if neither is available
 
 def group_dicom_paths_by_series_with_topogram_flag(folder_path):
     series_dict = defaultdict(list)
@@ -37,14 +65,16 @@ def group_dicom_paths_by_series_with_topogram_flag(folder_path):
 
         try:
             ds = pydicom.dcmread(filepath, stop_before_pixels=True)
+
             series_uid = ds.SeriesInstanceUID
+
             series_dict[series_uid].append(filepath)
-            
+
             dims = (getattr(ds, "Rows", None), getattr(ds, "Columns", None))
             dimensions_dict[series_uid].append(dims)
 
             if series_uid not in series_descriptions:
-                series_descriptions[series_uid] = series_description(ds)
+                series_descriptions[series_uid] = get_series_flag(ds)
 
         except Exception as e:
             print(f"Skipped {filename}: {e}")
@@ -53,15 +83,14 @@ def group_dicom_paths_by_series_with_topogram_flag(folder_path):
     path = []
     flags = []
     dimensions = []
-   
+
     for series_uid, file_list in series_dict.items():
         result.extend([series_uid])
         path.extend([file_list])
         flags.extend([series_descriptions.get(series_uid, False)])
         dimensions.append(dimensions_dict[series_uid])
-     
 
-    return result,path,flags,dimensions
+    return result, path, flags, dimensions
 
 """
 INSERT INTO DB
@@ -102,16 +131,14 @@ def insert_db_document(ls):
 def preparation(folder):
     dicom_list,paths,flags,dims = group_dicom_paths_by_series_with_topogram_flag(folder)
     for i in range(len(dicom_list)):
-        # print("flags",flags[i])
-      
-        keywords = ["übersicht","summary","table","chart","graph","proto", "befund", "doc", "report","bericht","stat","surview","info","referenz","snapshot","smart","image","results"]
+        keywords = ["übersicht","summary","table","chart","proto", "befund", "doc", "report","bericht","stat","info","referenz","snapshot","smart","image","results"]
     
         # Check if any of the keywords are in the path
         if any(keyword in flags[i].lower() for keyword in keywords):
 
             db_row = [folder.split("/")[-1],dicom_list[i],flags[i]]
             insert_db_document(db_row)
-        elif 'top' in flags[i].lower() or 'scout' in flags[i].lower() or 'localizer' in flags[i].lower():
+        elif 'top' in flags[i].lower() or 'scout' in flags[i].lower() or 'localizer' in flags[i].lower() or 'surview' in flags[i].lower():
 
             db_row = [folder.split("/")[-1],dicom_list[i],flags[i],str(paths[i])]
             insert_db_topo(db_row)
