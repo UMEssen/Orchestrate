@@ -166,12 +166,19 @@ def preprocess(dicom_paths,axis,n,num_slices,low,high,dynamic,offset,extract_met
             Any: Do whatever you think is best.
         """
 
-        reader = sitk.ImageSeriesReader()
-
-        # # Read the DICOM series
-        reader.SetFileNames(dicom_paths)
-
-        img = reader.Execute()
+        try:
+            def get_z_position(dcm_file):
+                    ds = pydicom.dcmread(dcm_file, stop_before_pixels=True)
+                    return float(ds.ImagePositionPatient[2])
+            
+            ct_path_sorted = sorted(dicom_paths, key=get_z_position)
+            reader = sitk.ImageSeriesReader()
+            reader.SetFileNames(ct_path_sorted)  # Use sorted list
+            img = reader.Execute()
+        except:
+            reader = sitk.ImageSeriesReader()
+            reader.SetFileNames(dicom_paths)
+            img = reader.Execute()
 
         if plane != 'Axial':
             img = reorient_to_axial(img)
@@ -254,7 +261,19 @@ def dicoms4yolo_topo(topo_file_path):
         return png, topo_image
     except:
         return None, None
-
+        
+def nii4yolo_topo(topo_file_path):
+    
+    try:
+        
+        topo_image = sitk.ReadImage(topo_file_path)
+        topo_data =  sitk.GetArrayFromImage(topo_image)
+        img = normalize_and_convert_to_uint8(topo_data[0],-1000,3000)
+        img_padded = letterbox_resize(img)
+        png = np.stack([img_padded] * 3, axis=-1) #(640,640,3)        
+        return png, topo_image
+    except:
+        return None, None
 
 def create_gallery(arr,n,num_slices):
         depth = arr.shape[0]
