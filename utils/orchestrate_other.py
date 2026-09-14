@@ -36,14 +36,11 @@ def handle_other_modality(ct_names,ct_measures,ct_fmd,ct_study,modalities,result
         )
         insert_db(db_row)
 
-    elif planes[i] in ["coronal","sagittal"]:
-        db_row = [ct_study,ct_names[i],"Not Axial"]
+    elif planes[i] in ["coronal","sagittal",'lws_bws_hws']:
+        db_row = [ct_study,ct_names[i],f"{planes[i]} image, not usable"]
         insert_db_error(db_row)
     elif planes[i] == "axial" and ct_measures[i] == "not axial image":
         db_row = [ct_study,ct_names[i],f"image range not usable"]
-        insert_db_error(db_row)
-    elif planes[i] == 'lws_bws_hws':
-        db_row = [ct_study,ct_names[i],f"{planes[i]} image"]
         insert_db_error(db_row)
     elif len(ct_measures[i]) == 0:
         db_row = [ct_study,ct_names[i],f"This ct scans did not cover any detected body regions"]
