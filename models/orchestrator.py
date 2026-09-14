@@ -78,7 +78,7 @@ def orchestrate_models(ct_study: str) -> dict:
             
             else:
                 lateral_topo_brain_detect_result = LateralBrainDetector(topo_data)
-                if result_viewposition == "Lateral" and lateral_topo_brain_detect_result!= "no detections" and result_Topo["result"]=="brain_neck":             
+                if (result_viewposition == "Lateral" and lateral_topo_brain_detect_result!= "no detections") or (result_viewposition == "Lateral" and result_Topo["result"]=="brain_neck"):             
                     ct_names,modalities,planes,thicknesses,plane1,plane2,plane3,ct_path= ct_selection_lateral(df_scan)
                     ct_cohort = []
                     for i in range(len(modalities)):
