@@ -12,7 +12,6 @@ def detect_head_hybrid(dicom_slices, ct_array, prefer_metadata=True):
     
     # metadata detection
     metadata_position = None
-    metadata_confidence = 0.0
     
     # Check PatientPosition
     if hasattr(dicom_slices[0], 'PatientPosition'):
@@ -22,19 +21,16 @@ def detect_head_hybrid(dicom_slices, ct_array, prefer_metadata=True):
         
         if patient_pos in ['HFS', 'HFP']: 
             metadata_position = 'end' #Head First: head at END
-            metadata_confidence = 0.9
         
         elif patient_pos in ['FFS', 'FFP']:
             metadata_position = 'start'#Feet First: head at START
-            metadata_confidence = 0.9
             
         elif patient_pos.startswith('HF'):
             metadata_position = 'end' #Likely Head First
-            metadata_confidence = 0.7
             
         elif patient_pos.startswith('FF'):
             metadata_position = 'start' #Likely Feet First
-            metadata_confidence = 0.7
+
             
         else:
             print(f"Unknown position code: {patient_pos}")
@@ -59,136 +55,9 @@ def detect_head_hybrid(dicom_slices, ct_array, prefer_metadata=True):
         # If no PatientPosition, use Z-coordinate
         if metadata_position is None:
             metadata_position = z_position
-            metadata_confidence = 0.6
-            
-        elif metadata_position == z_position:
-            metadata_confidence = min(metadata_confidence + 0.1, 1.0)
-            
-        else:
-            metadata_confidence *= 0.8  # Reduce confidence
-    
-    details['metadata_position'] = metadata_position
-    details['metadata_confidence'] = metadata_confidence
-    
-    
-    # HU-based detection
-    hu_position = None
-    hu_confidence = 0.0
-    
-    # Check if data looks like raw HU
-    if ct_array.min() >= 0 and ct_array.max() <= 255:
-        print("⚠️ HU analysis NOT reliable on normalized data, Skipping HU analysis")
-
-    elif ct_array.min() < -500: # data appears to be raw HU
-        
-        try:
-            # Use the HU-based detection
-            hu_position, hu_score_start, hu_score_end = detect_head_from_hu(ct_array)
-            
-            # Calculate confidence based on score difference
-            score_diff = abs(hu_score_start - hu_score_end)
-            hu_confidence = min(score_diff * 2, 1.0)  # Scale to 0-1
-            
-            details['hu_position'] = hu_position
-            details['hu_confidence'] = hu_confidence
-            details['hu_score_start'] = hu_score_start
-            details['hu_score_end'] = hu_score_end
-            
-        except Exception as e:
-            print(f"❌ HU analysis failed: {e}")
-    else:
-        print("⚠️Cannot perform reliable HU analysis")
-    
-    """
-    Combining results
-    """
-
-    if metadata_position and hu_position: # Both methods are available
-
-        if metadata_position == hu_position:
-            final_position = metadata_position
-            final_confidence = max(metadata_confidence, hu_confidence)
-            method = 'both_agree'
-        
-        else: # Disagreement - use higher confidence
-            if prefer_metadata and metadata_confidence >= 0.7:
-                final_position = metadata_position
-                final_confidence = metadata_confidence
-                method = 'metadata_preferred'
-           
-            elif metadata_confidence > hu_confidence:
-                final_position = metadata_position
-                final_confidence = metadata_confidence
-                method = 'metadata_higher_confidence'
-            else:
-                final_position = hu_position
-                final_confidence = hu_confidence
-                method = 'hu_higher_confidence'
-    
-    elif metadata_position: # Only metadata available
-        final_position = metadata_position
-        final_confidence = metadata_confidence
-        method = 'metadata_only'
-    
-    elif hu_position: # Only HU analysis available
-        final_position = hu_position
-        final_confidence = hu_confidence
-        method = 'hu_only'
-      
-    else:
-        # Neither method worked
-        raise ValueError(
-            "Cannot determine head position. Please use manual_position parameter."
-        )
-    
-    details['final_position'] = final_position
-    details['final_confidence'] = final_confidence
-    details['method'] = method
-       
-    return final_position, method, final_confidence, details
-
-
-def detect_head_from_hu(ct_array, sample_size=5):
-
-    num_slices = ct_array.shape[0]
-    sample_size = min(sample_size, num_slices // 4)
-    
-    # Sample both ends
-    start_slices = ct_array[:sample_size]
-    end_slices = ct_array[-sample_size:]
-    
-    # Calculate scores
-    start_score = calculate_head_score_simple(start_slices)
-    end_score = calculate_head_score_simple(end_slices)
-    
-    if start_score > end_score:
-        position = 'start'
-    else:
-        position = 'end'
-    
-    return position, start_score, end_score
-
-
-def calculate_head_score_simple(slices):
-    scores = []
-    
-    for slice_img in slices:
-        mean_intensity = np.mean(slice_img)
-        
-        std_intensity = np.std(slice_img)
-        
-        threshold = np.percentile(slice_img, 90)
-        high_intensity_ratio = np.sum(slice_img > threshold) / slice_img.size
-        
-        # Simple score
-        score = (
-            0.4 * (mean_intensity / (np.max(slice_img) + 1)) +
-            0.4 * (std_intensity / (np.max(slice_img) + 1)) +
-            0.2 * high_intensity_ratio
-        )
-        scores.append(score)
-    
-    return np.mean(scores)
+               
+    details['metadata_position'] = metadata_position 
+    return metadata_position, details
 
 
 def get_spacing_from_dicom(dicom_slices):
@@ -217,8 +86,6 @@ def get_spacing_from_dicom(dicom_slices):
 
 
 def load_and_remove_head_hybrid(folder_path, series_uid, head_percentage=0,prefer_metadata=True):
-       
-    # Load DICOM files
     dicom_files = []
     
     for root, dirs, files in os.walk(folder_path):
@@ -234,9 +101,6 @@ def load_and_remove_head_hybrid(folder_path, series_uid, head_percentage=0,prefe
     if not dicom_files:
         raise ValueError(f"No files found with Series UID: {series_uid}")
     
-
-    
-    # Load and sort slices
     slices = []
     for filepath in dicom_files:
         ds = pydicom.dcmread(filepath)
@@ -248,29 +112,19 @@ def load_and_remove_head_hybrid(folder_path, series_uid, head_percentage=0,prefe
     elif hasattr(slices[0], 'InstanceNumber'):
         slices.sort(key=lambda x: int(x.InstanceNumber))
     
-    # Get spacing
+
     sx, sy, sz = get_spacing_from_dicom(slices)
-    
-    # Convert to numpy array
     ct_array = np.stack([s.pixel_array for s in slices])
-    print(f"Loaded CT shape: {ct_array.shape}")
-    print(f"Value range: [{ct_array.min()}, {ct_array.max()}]")
-    
+
     # Detect head position
-    
     try:
-        head_position, method, confidence, details = detect_head_hybrid(
+        head_position, details = detect_head_hybrid(
             slices, ct_array, prefer_metadata
         )
     except ValueError as e:
         print(f"\n❌ Detection failed: {e}")
         raise
     
-     # Warning if low confidence
-    if confidence < 0.7:
-        print(f"\n⚠️  WARNING: Low confidence ({confidence:.2f})")
-        print("   Recommend manual verification of results!")
-
     # Remove head slices
     num_slices = ct_array.shape[0]
     num_head_slices = int(num_slices * head_percentage)
