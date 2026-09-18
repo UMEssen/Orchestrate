@@ -6,6 +6,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import os
 import sqlite3
+from utils.config import OUTPUT_DB
 
 st.set_page_config(layout="wide", page_title="CT Series Viewer")
 
@@ -364,9 +365,9 @@ def main(candidate,region,landmark,deid):
     st.markdown("---")
 
 if __name__ == "__main__":
-    csv_path = "path-of-target-cases"  # csv of target use cases
-    studies_folder = "path-of-dicom-data"     # raw dicom data
-    conn = sqlite3.connect("orchestrait.db") # orchestrate database
+    csv_path = os.getenv("ORCHESTRATE_VIEWER_CSV", "")
+    studies_folder = os.getenv("ORCHESTRATE_VIEWER_STUDIES", "")
+    conn = sqlite3.connect(OUTPUT_DB)
     cursor = conn.cursor()
     query =f"SELECT * FROM candidate"
     candidate = pd.read_sql_query(query, conn)

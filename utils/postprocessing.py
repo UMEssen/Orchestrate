@@ -1,5 +1,6 @@
 
 import sqlite3
+from utils.config import OUTPUT_DB
 
 def get_head_position(bbox,label):
     target_label = 0
@@ -19,7 +20,7 @@ def select_brain_ct_from_scans(head_y_max,bottom,top):
 
 def insert_db(ls):
     # print("begin insert")
-    conn = sqlite3.connect("db/orchestrait.db")
+    conn = sqlite3.connect(OUTPUT_DB)
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -32,7 +33,7 @@ def insert_db(ls):
     # print(f" entries inserted successfully.")
 
 def insert_db_regions(ls):
-    conn = sqlite3.connect("db/orchestrait.db")
+    conn = sqlite3.connect(OUTPUT_DB)
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -45,7 +46,7 @@ def insert_db_regions(ls):
     # print(f" entries inserted successfully.")
 
 def insert_db_landmarks(ls):
-    conn = sqlite3.connect("db/orchestrait.db")
+    conn = sqlite3.connect(OUTPUT_DB)
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -58,7 +59,7 @@ def insert_db_landmarks(ls):
     # print(f" entries inserted successfully.")
 
 def insert_db_error(ls):
-    conn = sqlite3.connect("db/orchestrait.db")
+    conn = sqlite3.connect(OUTPUT_DB)
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -71,7 +72,7 @@ def insert_db_error(ls):
     # print(f" entries inserted successfully.")
 
 def insert_deid(ls):
-    conn = sqlite3.connect("db/orchestrait.db")
+    conn = sqlite3.connect(OUTPUT_DB)
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -82,7 +83,7 @@ def insert_deid(ls):
     conn.commit()
     conn.close()
 def insert_db_rapid(ls):
-    conn = sqlite3.connect("db/orchestrait.db")
+    conn = sqlite3.connect(OUTPUT_DB)
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -92,4 +93,3 @@ def insert_db_rapid(ls):
 
     conn.commit()
     conn.close()
-     

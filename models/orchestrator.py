@@ -12,6 +12,7 @@ from utils.DCMreceiver import preparation, run_studies
 from db.create_table import create_table_candidate,create_table_preprocessing
 import sqlite3
 import os
+from utils.config import METADATA_DB
 import cupy as cp
 from multiprocessing import Pool
 from functools import partial
@@ -149,7 +150,7 @@ def orchestrate_models(ct_study: str) -> dict:
 
 def process_single_study(study: str, ct_studies: str) -> dict:
     """Process a single study"""
-    conn = sqlite3.connect("db/metadata.db")
+    conn = sqlite3.connect(METADATA_DB)
     cursor = conn.cursor()
     cursor.execute(f"SELECT 1 FROM topogram WHERE studies = ?", (study,))
     exists = cursor.fetchone()

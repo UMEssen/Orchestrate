@@ -2,6 +2,12 @@ from ultralytics import YOLO
 import torch
 import cv2
 import numpy as np
+import os
+
+
+def inference_device() -> str:
+    """Return the configured inference device, defaulting to the first CUDA GPU."""
+    return os.getenv("ORCHESTRATE_DEVICE", "cuda:0" if torch.cuda.is_available() else "cpu")
 def letterbox(img, target_size=(640, 640), color=(114, 114, 114)):
     """
     Automatically scale image 
@@ -60,9 +66,10 @@ def yolo_detector(data: str, model_path:str)-> dict:
     if data_resized.max() > 1.0:
         data_resized = data_resized / 255.0
 
-    data_tensor = torch.from_numpy(data_resized).permute(2, 0, 1).unsqueeze(0).to('cuda')
+    device = inference_device()
+    data_tensor = torch.from_numpy(data_resized).permute(2, 0, 1).unsqueeze(0).to(device)
 
-    results = model(data_tensor, device=5)
+    results = model(data_tensor, device=device)
     
     for result in results:
         boxes = result.boxes  
@@ -91,10 +98,11 @@ def yolo_classifier(data: str, model_path:str)-> dict:
     if data_resized.max() > 1.0:
         data_resized = data_resized / 255.0
 
-    data_tensor = torch.from_numpy(data_resized).permute(2, 0, 1).unsqueeze(0).to('cuda')
+    device = inference_device()
+    data_tensor = torch.from_numpy(data_resized).permute(2, 0, 1).unsqueeze(0).to(device)
 
     model = YOLO(model_path)
-    result = model(data_tensor)  
+    result = model(data_tensor, device=device)
     probs_list = [item.probs for item in result]
     probs = [probs.data.cpu().numpy().tolist() for probs in probs_list][0]
     max_prob = max(probs)
@@ -103,4 +111,3 @@ def yolo_classifier(data: str, model_path:str)-> dict:
     predicted = result[0].names[prob_idx]
 
     return {"result":predicted}
-

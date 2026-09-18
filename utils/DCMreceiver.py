@@ -4,6 +4,7 @@ import sqlite3
 import pandas as pd
 from collections import defaultdict, Counter
 import ast
+from utils.config import METADATA_DB
 
 def filter(path,dim):
     dim_counter = Counter(dim)
@@ -97,7 +98,7 @@ INSERT INTO DB
 """
    
 def insert_db_dcm(ls):
-    conn = sqlite3.connect("db/metadata.db")
+    conn = sqlite3.connect(METADATA_DB)
     cursor = conn.cursor()
     cursor.execute("""
     INSERT INTO dicom_recevier (studies, series,series_descriptions,filepath)
@@ -108,7 +109,7 @@ def insert_db_dcm(ls):
     conn.close()
 
 def insert_db_topo(ls):
-    conn = sqlite3.connect("db/metadata.db")
+    conn = sqlite3.connect(METADATA_DB)
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -119,7 +120,7 @@ def insert_db_topo(ls):
     conn.close()
 
 def insert_db_document(ls):
-    conn = sqlite3.connect("db/metadata.db")
+    conn = sqlite3.connect(METADATA_DB)
     cursor = conn.cursor()
     cursor.execute("""
     INSERT INTO documents (studies, series,series_descriptions)
@@ -163,11 +164,10 @@ def read_studies_from_db(db,name,studyID):
     return df
     
 def run_studies(studyID):
-    df_topo = read_studies_from_db("db/metadata.db","topogram",studyID)
+    df_topo = read_studies_from_db(str(METADATA_DB),"topogram",studyID)
     df_topo["filepath"] = df_topo["filepath"].apply(ast.literal_eval)
-    df_scan = read_studies_from_db("db/metadata.db","dicom_recevier",studyID)
+    df_scan = read_studies_from_db(str(METADATA_DB),"dicom_recevier",studyID)
     df_scan ["filepath"] = df_scan["filepath"].apply(ast.literal_eval)
     df_scan = df_scan[df_scan.studies.isin(df_topo.studies.values.tolist())]
     return  df_topo, df_scan
-
 

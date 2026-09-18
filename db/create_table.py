@@ -1,7 +1,9 @@
 import sqlite3
+from utils.config import METADATA_DB, OUTPUT_DB, ensure_runtime_directories
 
 def create_table_candidate():
-    conn = sqlite3.connect("db/orchestrait.db")
+    ensure_runtime_directories()
+    conn = sqlite3.connect(OUTPUT_DB)
     cursor = conn.cursor()
 
     # main table
@@ -87,7 +89,8 @@ def create_table_candidate():
 
 
 def create_table_preprocessing():
-    conn = sqlite3.connect("db/metadata.db")
+    ensure_runtime_directories()
+    conn = sqlite3.connect(METADATA_DB)
     cursor = conn.cursor()
 
     # main table because each study must has a topogram
@@ -126,4 +129,3 @@ def create_table_preprocessing():
     conn.commit()
     conn.close()
     #print("Database and table created successfully.")
-

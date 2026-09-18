@@ -3,6 +3,7 @@ import torch
 from .labels import body_organ_labels,body_region_labels,foreign_metall_labels
 from .preprocessing import is_ct,get_slice_thickness,store_imagebase64,get_dicom_plane
 from .mapping import print_bounds
+from .helper import inference_device
 
 def is_image_axial(x1plane,x2plane, threshold= 100):
     """
@@ -19,7 +20,7 @@ def is_valid_modality(modality):
 
 
 
-def bbox_filter_by_range(bboxes, lower, upper, device="cuda:0"):
+def bbox_filter_by_range(bboxes, lower, upper, device=None):
     """
     Filter bounding boxes that lie within a given vertical range, and compute the percentage of overlap.
 
@@ -27,13 +28,13 @@ def bbox_filter_by_range(bboxes, lower, upper, device="cuda:0"):
         bboxes: torch.Tensor of shape (N, 4) with boxes [x1, y1, x2, y2]
         lower: scalar int or tensor (Y lower bound)
         upper: scalar int or tensor (Y upper bound)
-        device: torch device with "cuda:0"
+        device: optional torch device; defaults to ``ORCHESTRATE_DEVICE``
 
     Returns:
         mask: torch.BoolTensor of shape (N,) - whether each bbox intersects the range
         percentages: torch.FloatTensor of shape (N,) - percent of height within range (0 to 1)
     """
-    bboxes = bboxes.to(device)
+    bboxes = bboxes.to(device or inference_device())
     
 
     y1 = bboxes[:, 1]
@@ -161,7 +162,10 @@ def process_ct_scan(
         else:
             fmd_mask,_ = bbox_filter_by_range(result_fmd["bounding_box"], lower, upper)
             filtered_fmd = result_fmd["class"][fmd_mask].int().tolist()
-            fmd_labels = [foreign_metall_labels[i] for i in filtered_fmd]
+            fmd_labels = [
+                foreign_metall_labels[i] if i < len(foreign_metall_labels) else f"foreign_metal_class_{i}"
+                for i in filtered_fmd
+            ]
         
         return {
             "measures": region_labels,
