@@ -232,8 +232,13 @@ These checks cover Python compilation and the shared checkpoint/runtime configur
 
 ### Orchestrate
 
-> **Publication record pending:** Add the final Orchestrate manuscript citation and DOI here once available.
-
+```text
+Wen Y, Quinsten A, Schmidt C, Bojahr C, Kohnke J, Arzideh K, Warmer S, Blex S, Jacoby A, Eberts M, Lehmann H, Pollok O, Holtkamp M, Salhöfer L, Umutlu L, Forsting M, Haubold J, Nensa F, Borys K, Hosch R
+A Multi-Model, Pixel-Native Framework for Automated Computed Tomography Series Labeling and Characterization: Proof-of-Concept Study
+JMIR Med Inform 2026;14:e93018
+URL: https://medinform.jmir.org/2026/1/e93018
+DOI: 10.2196/93018
+```
 ### RAPID
 
 The anatomical topogram-labeling components are related to the RAPID work:
